@@ -1,222 +1,340 @@
-#ifndef SEQUENCE_HPP
-#define SEQUENCE_HPP
+#ifndef SEQUENCE_6_18_2014_HPP
+#define SEQUENCE_6_18_2014_HPP
 
+#include <iterator>
 #include <iostream>
 #include <vector>
 
-template<typename Segment>
+/// Forward declare for our custom global operators
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
 class Sequence;
 
-template<typename Segment>
-std::ostream& operator<<(std::ostream& stream, const Sequence<Segment>& sequence);
+/**
+ * Inserts the provided Sequence into the provided output stream
+ * 
+ * @param stream the output stream to insert into
+ * 
+ * @param sequence the Sequence to insert
+ * 
+ * @return the provided output stream
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+std::ostream& operator<<(std::ostream& stream, const Sequence<Module>& sequence);
 
-template<typename Segment>
-std::ostream& operator<<(std::ostream& stream, Sequence<Segment>&& sequence);
+/**
+ * Inserts the provided Sequence into the provided output stream
+ * 
+ * @param stream the output stream to insert into
+ * 
+ * @param sequence the Sequence to insert
+ * 
+ * @return the provided output stream
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+std::ostream& operator<<(std::ostream& stream, Sequence<Module>&& sequence);
 
-template<typename Segment>
-std::istream& operator>>(std::istream& stream, Sequence<Segment>& sequence);
+/**
+ * Populates the provided Sequence from the data extracted from the provided input stream 
+ * 
+ * @param stream the stream to extract data from
+ * 
+ * @param sequence the Sequence to populate
+ * 
+ * @return the provided input stream
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+std::istream& operator>>(std::istream& stream, Sequence<Module>& sequence);
 
-template<typename Segment>
-bool operator==(const Sequence<Segment>& segment0, const Sequence<Segment>& segment1);
+/**
+ * Equality operator for Sequences
+ * 
+ * @param sequence0 the first Sequence to compare
+ * 
+ * @param sequence1 the second Sequence to compare
+ * 
+ * @return true if and only if the first Sequence is equivalent to the second
+ * 
+ * @note The provided Sequences may be subjected to epsilon-value floating point comparisons as required
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+bool operator==(const Sequence<Module, Container>& sequence0, const Sequence<Module, Container>& sequence1);
 
-template<typename Segment>
-bool operator!=(const Sequence<Segment>& segment0, const Sequence<Segment>& segment1);
+/**
+ * Inequality operator for Sequences
+ * 
+ * @param sequence0 the first Sequence to compare
+ * 
+ * @param sequence1 the second Sequence to compare
+ * 
+ * @return true if and only if the first Sequence is not equivalent to the second
+ * 
+ * @note The provided Sequences may be subjected to epsilon-value floating point comparisons as required
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+bool operator!=(const Sequence<Module, Container>& sequence0, const Sequence<Module, Container>& sequence1);
 
-template<typename Segment>
-Sequence<Segment> operator+(const Sequence<Segment>& segment0, const Sequence<Segment>& segment1);
+/**
+ * Creates a Sequence by adding the two provided Sequences
+ * 
+ * @param sequence0 the first Sequence to add
+ * 
+ * @param segment1 the second Sequence to add
+ * 
+ * @return a Sequence that represents the sum of the two provided Sequences
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+Sequence<Module> operator+(const Sequence<Module>& sequence0, const Sequence<Module>& sequence1);
 
-template<typename Segment>
-Sequence<Segment> operator+(Sequence<Segment>&& segment0, Sequence<Segment>&& segment1);
+/**
+ * Creates a Sequence by adding the two provided Sequences
+ * 
+ * @param sequence0 the first Sequence to add
+ * 
+ * @param segment1 the second Sequence to add
+ * 
+ * @return a Sequence that represents the sum of the two provided Sequences
+ * 
+ * @note For an optimization, consider this operator when sequence0 and sequence1 are not referenced by the 
+ * calling method after this method returns.
+ * 
+ * @code Sequence<int> seq0, seq1;
+ * Sequence<int> seq3 = std::move(seq0) + std::move(seq1)
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container = std::vector>
+Sequence<Module> operator+(Sequence<Module>&& sequence0, Sequence<Module>&& sequence1);
 
-template<typename Segment>
+/// Inject our 'Module' concept checks
+//#include "ModuleConcepts.hpp"
+
+/**
+ * A Sequence is a complete series of barcode segments that represents the encoded form of a piece of data.  Sequences 
+ * are designed to be STL-compatible such that they are compatible with iteration and various other standard 
+ * operations.
+ * 
+ */
+template<typename Module, template<typename Element, typename = std::allocator<Element>> class Container>
 class Sequence
 {
-    friend std::ostream& ::operator<<<>(std::ostream&, const Sequence<Segment>&);
-    friend std::ostream& ::operator<<<>(std::ostream&, Sequence<Segment>&&);
-    friend std::istream& ::operator>><>(std::istream&, Sequence<Segment>&);
-    friend bool ::operator==<>(const Sequence<Segment>&, const Sequence<Segment>&);
-    friend bool ::operator!=<>(const Sequence<Segment>&, const Sequence<Segment>&);
-    friend Sequence<Segment> operator+<>(const Sequence<Segment>&, const Sequence<Segment>&);
-    friend Sequence<Segment> operator+<>(Sequence<Segment>&&, Sequence<Segment>&&);
+    /// Global operators that can bypass the indirection to the underlying STL container
+    friend std::ostream& operator<<<>(std::ostream&, const Sequence<Module>&);
+    friend std::ostream& operator<<<>(std::ostream&, Sequence<Module>&&);
+    friend std::istream& operator>><>(std::istream&, Sequence<Module>&);
+    friend bool operator==<>(const Sequence<Module>&, const Sequence<Module>&);
+    friend bool operator!=<>(const Sequence<Module>&, const Sequence<Module>&);
+    friend Sequence<Module> operator+<>(const Sequence<Module>&, const Sequence<Module>&);
+    friend Sequence<Module> operator+<>(Sequence<Module>&&, Sequence<Module>&&);
 
-    std::vector<Segment> segments;
+    /// The collective Modules that make up this Sequence
+    Container<Module> segments;
     
   public:
-    
-    typedef typename std::vector<Segment>::allocator_type allocator_type;
-    typedef typename std::vector<Segment>::const_iterator const_iterator;
-    typedef typename std::vector<Segment>::const_pointer const_pointer;
-    typedef typename std::vector<Segment>::const_reference const_reference;
-    typedef typename std::vector<Segment>::const_reverse_iterator const_reverse_iterator;
-    typedef typename std::vector<Segment>::difference_type difference_type;
-    typedef typename std::vector<Segment>::iterator iterator;
-    typedef typename std::vector<Segment>::pointer pointer;
-    typedef typename std::vector<Segment>::reference reference;
-    typedef typename std::vector<Segment>::reverse_iterator reverse_iterator;
-    typedef typename std::vector<Segment>::size_type size_type;
-    typedef typename std::vector<Segment>::value_type value_type;
-    
-    template<typename... E>
-    Sequence(Segment&& first, E&& ...remaining);
-    
-    Sequence(std::initializer_list<Segment>&& segments);
-   
-    Sequence() = default;
 
-    Sequence& operator=(const Sequence&) = default;
-    Sequence& operator=(Sequence&&) = default;
-
-    Sequence(const Sequence&) = default;
-    Sequence(Sequence&&) = default;
+    /// Alias typedefs to the underlying STL container types
+    typedef typename std::vector<Module>::allocator_type allocator_type;
+    typedef typename std::vector<Module>::const_iterator const_iterator;
+    typedef typename std::vector<Module>::const_pointer const_pointer;
+    typedef typename std::vector<Module>::const_reference const_reference;
+    typedef typename std::vector<Module>::const_reverse_iterator const_reverse_iterator;
+    typedef typename std::vector<Module>::difference_type difference_type;
+    typedef typename std::vector<Module>::iterator iterator;
+    typedef typename std::vector<Module>::pointer pointer;
+    typedef typename std::vector<Module>::reference reference;
+    typedef typename std::vector<Module>::reverse_iterator reverse_iterator;
+    typedef typename std::vector<Module>::size_type size_type;
+    typedef typename std::vector<Module>::value_type value_type;
     
-    ~Sequence() = default;
-    
+    /**
+     * Retrieves an iterator to the beginning of this Sequence
+     * 
+     * @return an iterator to the beginning of this Sequence
+     * 
+     */
     iterator begin() noexcept;
-    const_iterator cbegin() const noexcept;
-    iterator end() noexcept;
-    const_iterator cend() const noexcept;
     
+    /**
+     * Retrieves a const_iterator to the beginning of this Sequence
+     * 
+     * @return a const_iterator to the beginning of this Sequence
+     */
+    const_iterator begin() const noexcept;
+    
+    /**
+     * Retrieves an iterator to the end of this Sequence
+     * 
+     * @return an iterator to the end of this Sequence
+     * 
+     */
+    iterator end() noexcept;
+    
+    /**
+     * Retrieves a const_iterator to the end of this Sequence
+     * 
+     * @return a const_iterator to the end of this Sequence
+     * 
+     */
+    const_iterator end() const noexcept;
+    
+    /**
+     * Retrives the number of Modules that make up this Sequence
+     * 
+     * @return the number of Modules that make up this Sequence
+     * 
+     */
     size_type size() const noexcept;
     
-    Sequence<Segment> operator+=(const Sequence<Segment>& other);
-    Sequence<Segment> operator+=(Sequence<Segment>&& other);
+    /**
+     * Retrieves the Module at the provided index
+     * 
+     * @param index the index to retrieve
+     * 
+     * @return the Module at the provided index
+     * 
+     * @note If index does not lie within the bounds of this Sequence, the behavior is undefined.
+     */
+    const_reference operator[](unsigned index) const;
     
+    /**
+     * Retrieves the Module at the provided index
+     * 
+     * @param index the index to retrieve
+     * 
+     * @return the Module at the provided index
+     * 
+     * @note If index does not lie within the bounds of this Sequence, the behavior is undefined.
+     */
+    reference operator[](unsigned index);
+    
+    /**
+     * Adds the provided Sequence to this one
+     * 
+     * @param sequence the Sequence to add
+     * 
+     * @return *this
+     * 
+     */
+    Sequence& operator+=(const Sequence& sequence);
+    
+    /**
+     * Adds the provided Sequence to this one
+     * 
+     * @param sequence the Sequence to add
+     * 
+     * @return *this
+     * 
+     */
+    Sequence& operator+=(Sequence&& sequence);
+
+    /**
+     * Adds the provided Module to the end of this Sequence
+     * 
+     * @param module the Module to add
+     * 
+     * @return *this
+     * 
+     */
+    Sequence& operator+=(const Module& module);
+    
+    /**
+     * Adds the provided Module to the end of this Sequence
+     * 
+     * @param module the Module to add
+     * 
+     * @return *this
+     * 
+     */
+    Sequence& operator+=(Module&& module);
+    
+    /**
+     * Constructs an empty Sequence
+     * 
+     */
+    constexpr Sequence() = default;
+
+    /**
+     * Constructs a Sequence with the provided segments
+     * 
+     * @param first the first Module
+     * 
+     * @param remaining all subsequent Modules
+     * 
+     */
+    template<typename... E>
+    Sequence(Module&& first, E&& ...remaining);
+    
+    /**
+     * Constructs a Sequence with the provided segments
+     * 
+     * @param first the first Module
+     * 
+     * @param remaining all subsequent Modules
+     * 
+     */
+    template<typename... E>
+    Sequence(const Module& first, const E& ...remaining);
+    
+    /**
+     * Constructs a Sequence from the provided initializer list of Modules
+     * 
+     * @param segments the Modules that make up this Sequence
+     * 
+     * @code
+     * Use Examples:
+     * <t>Sequence<int> sequence {0, 1, 2, 3};
+     * 
+     */
+    Sequence(std::initializer_list<Module>&& segments);
+   
+    /**
+     * Default copy-assignment operator
+     * 
+     * @param sequence the Sequence to assign to this one
+     * 
+     * @return *this
+     * 
+     */
+    Sequence& operator=(const Sequence& sequence) = default;
+    
+    /**
+     * Default move-assignment operator
+     * 
+     * @param sequence the Sequence to assign to this one
+     * 
+     * @return *this
+     * 
+     */
+    Sequence& operator=(Sequence&& sequence) = default;
+
+    /**
+     * Default copy-constructor
+     * 
+     * @param sequence the Sequence that is being copied
+     * 
+     */
+    Sequence(const Sequence& sequence) = default;
+    
+    /**
+     * Default move-constructor
+     * 
+     * @param sequence the Sequence that is being moved
+     * 
+     */
+    Sequence(Sequence&& sequence) = default;
+    
+    /**
+     * Default non-virtual destructor
+     * 
+     */
+    ~Sequence() = default;
+       
 };
 
-#include <iterator>
-
-template<typename Segment>
-std::ostream& operator<<(std::ostream& stream, const Sequence<Segment>& sequence)
-{
-    std::copy(sequence.begin(), sequence.end(), std::ostream_iterator<char>(stream));
-    return stream;
-}
-
-template<typename Segment>
-std::ostream& operator<<(std::ostream& stream, Sequence<Segment>&& sequence)
-{
-    stream << static_cast<uint64_t>(sequence.segments.size());
-    std::move(sequence.segments.begin(), sequence.segments.end(), std::ostream_iterator<char>(stream));
-    return stream;
-}
-
-template<typename Segment>
-std::istream& operator>>(std::istream& stream, Sequence<Segment>& sequence)
-{
-    uint64_t size;
-    stream >> size;
-    sequence.segments.reserve(sequence.segments.size() + size);
-    std::copy(std::istream_iterator<Segment>(stream), std::istream_iterator<Segment>(), std::back_inserter(sequence.segments));
-    return stream;
-}
-
-template<typename Segment>
-bool operator==(const Sequence<Segment>& sequence0, const Sequence<Segment>& sequence1)
-{
-    if(sequence0.segments.size() == sequence1.segments.size())
-    {
-        for(typename Sequence<Segment>::size_type i = 0; i < sequence0.segments.size(); ++i)
-        {
-            if(sequence0.segments[i] != sequence1.segments[i])
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-template<typename Segment>
-bool operator!=(const Sequence<Segment>& sequence0, const Sequence<Segment>& sequence1)
-{
-    if(sequence0.segments.size() == sequence1.segments.size())
-    {
-        for(typename Sequence<Segment>::size_type i = 0; i < sequence0.segments.size(); ++i)
-        {
-            if(sequence0.segments[i] == sequence1.segments[i])
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-    return true;
-}
-
-template<typename Segment>
-Sequence<Segment> operator+(const Sequence<Segment>& sequence0, const Sequence<Segment>& sequence1)
-{
-    Sequence<Segment> rv = sequence0;
-    rv += sequence1;
-    return rv;
-}
-
-template<typename Segment>
-Sequence<Segment> operator+(Sequence<Segment>&& sequence0, Sequence<Segment>&& sequence1)
-{
-    return std::move(sequence0 += std::move(sequence1));
-}
-
-template<typename Segment>
-template<typename... E>
-Sequence<Segment>::Sequence(Segment&& first, E&& ...remaining) : 
-    Sequence<Segment>( { first, remaining... })
-{
-    
-}
-    
-template<typename Segment>
-Sequence<Segment>::Sequence(std::initializer_list<Segment>&& segments) : 
-    segments(segments)
-{
-    
-}
-
-template<typename Segment>
-typename Sequence<Segment>::iterator Sequence<Segment>::begin() noexcept
-{
-    return this->segments.begin();
-}
-
-template<typename Segment>
-typename Sequence<Segment>::const_iterator Sequence<Segment>::cbegin() const noexcept
-{
-    return this->segments.cbegin();
-}
-
-template<typename Segment>
-typename Sequence<Segment>::iterator Sequence<Segment>::end() noexcept
-{
-    return this->segments.end();
-}
-
-template<typename Segment>
-typename Sequence<Segment>::const_iterator Sequence<Segment>::cend() const noexcept
-{
-    return this->segments.cend();
-}
-
-template<typename Segment>
-typename Sequence<Segment>::size_type Sequence<Segment>::size() const noexcept
-{
-    return this->segments.size();
-}
-
-template<typename Segment>
-Sequence<Segment> Sequence<Segment>::operator+=(const Sequence<Segment>& other)
-{
-    this->segments.reserve(this->segments.size() + other.size());
-    std::copy(other.cbegin(), other.cend(), std::back_inserter(this->segments));
-    return *this;
-}
-
-template<typename Segment>
-Sequence<Segment> Sequence<Segment>::operator+=(Sequence<Segment>&& other)
-{
-    this->segments.reserve(this->segments.size() + other.size());
-    std::move(other.begin(), other.end(), std::back_inserter(this->segments));
-    return *this;
-}
+#include "Sequence.inl"
 
 #endif
